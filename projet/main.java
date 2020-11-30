@@ -86,7 +86,7 @@ public class main {
             System.out.println(tree.toString());
             System.out.println("compressing using compressPhi");
             
-            tree.compressPhi(25000);
+            tree.compress_phi(2096);
             
             
             System.out.println(tree.toString());

@@ -343,20 +343,21 @@ public class Quadtree {
 	 * @return : the sum of all color differences
 	 */
 	public double max_colorDifference_rec() {
-		
-		if(this.feuilles.get(0).feuilles.get(0) == null) {
-			return this.max_colorDifference();
+		if(this.color == null) {
+			if(this.feuilles.get(0).color != null) {
+				return this.max_colorDifference();
+			}else {
+				return Math.max(Math.max(this.feuilles.get(0).max_colorDifference_rec(), this.feuilles.get(1).max_colorDifference_rec()),
+						Math.max(this.feuilles.get(2).max_colorDifference_rec(), this.feuilles.get(3).max_colorDifference_rec()));
+			}
 		}else {
-			return Math.max(Math.max(this.feuilles.get(0).max_colorDifference_rec(), this.feuilles.get(1).max_colorDifference_rec()),
-					Math.max(this.feuilles.get(2).max_colorDifference_rec(), this.feuilles.get(3).max_colorDifference_rec()));
+			return 0;
 		}
 		
 	}
 	
 	
 	public void compressPhi(int nbFeuilles) {
-		
-
 		
 		if( nbFeuilles == 0) {
 			
@@ -450,28 +451,99 @@ public class Quadtree {
 		}
 	}
 	
+	public void compress_phi(int nbFeuilles) {
+		if(this.color ==null) {
+			if(nbFeuilles >= 16) {
+				
+				for(int i=0; i<4 ; i++) {
+					this.feuilles.get(i).compress_phi(nbFeuilles/4);
+				}
+				
+			}else if(nbFeuilles < 4) {
+				this.replaceParMoyen();
+				
+			}else {
+				
+				//calculating the max colour difference of each feuillles
+				double maxV1 = this.feuilles.get(0).max_colorDifference_rec();
+				double maxV2 = this.feuilles.get(1).max_colorDifference_rec();
+				double maxV3 = this.feuilles.get(2).max_colorDifference_rec();
+				double maxV4 = this.feuilles.get(3).max_colorDifference_rec();
+				
+				//creating a list of the max colour difference of each feuillles
+				ArrayList<Double> maxColors = new ArrayList<Double>(4);
+				maxColors.add(maxV1);
+				maxColors.add(maxV2);
+				maxColors.add(maxV3);
+				maxColors.add(maxV4);
+				
+				//crating a list of index that link each maxcolor with the correct index
+				ArrayList<Integer> index = new ArrayList<Integer>(4);
+				index.add(0);
+				index.add(1);
+				index.add(2);
+				index.add(3);
+				
+				
+				double tmpMaxColor;
+				int tmpind;
+				for(int i=0 ; i<3 ; i++) {
+					
+					for(int j=i+1; j<4;j++) {
+						
+						if(maxColors.get(j) < maxColors.get(i)) {
+							tmpMaxColor =  maxColors.get(i);
+							maxColors.set(i,maxColors.get(j));
+							maxColors.set(j,tmpMaxColor);
+							
+							//making the same changes in the list index
+							tmpind =  index.get(i);
+							index.set(i,index.get(j));
+							index.set(j,tmpind);
+							
+						}
+					}
+				}
+					
+					 
+					int nbNoeud = nbFeuilles/4;
+					
+					for(int i=0; i<4-nbNoeud ; i++) {
+						this.feuilles.get(index.get(i)).replaceParMoyen();
+					}
+					
+					for(int j=4-nbNoeud;j<4;j++) {
+						this.feuilles.get(index.get(j)).compress_phi(4);
+					}
+				
+				
+			}
+		}
+	}
+	
 	public void replaceParMoyen() {
-		
-		if(this.feuilles.get(0).feuilles.get(0) == null) {
-			// all subtrees are leafs
-			double redM = this.mediumRed();
-			double greenM = this.mediumgGreen();
-			double blueM = this.mediumBlue();
-			Color moyen = new Color((int)redM,(int)greenM,(int)blueM);
-			this.color = moyen;
-			
-			for(int i=0; i<4; i++) {
-				this.feuilles.set(i, null);
+		if(this.color == null) {
+			if(this.feuilles.get(0).color != null) {
+				// all subtrees are leafs
+				double redM = this.mediumRed();
+				double greenM = this.mediumgGreen();
+				double blueM = this.mediumBlue();
+				Color moyen = new Color((int)redM,(int)greenM,(int)blueM);
+				this.color = moyen;
+				
+				for(int i=0; i<4; i++) {
+					this.feuilles.set(i, null);
+				}
+				
+				
+			}else {
+				for(int i=0; i<4; i++) {
+					this.feuilles.get(i).replaceParMoyen();
+				}
+				
+				this.replaceParMoyen();
+				
 			}
-			
-			
-		}else {
-			for(int i=0; i<4; i++) {
-				this.feuilles.get(i).replaceParMoyen();
-			}
-			
-			this.replaceParMoyen();
-			
 		}
 	}
 	
